@@ -1,4 +1,3 @@
-// src/controllers/user.controller.js
 import userService from "../services/user.service.js";
 import { sendSuccess, sendError } from "../utils/response.util.js";
 
@@ -104,7 +103,6 @@ class UserController {
             next(error);
         }
     }
-    // Removed ForgotPassword and ResetPassword methods
 }
 
 export default new UserController();

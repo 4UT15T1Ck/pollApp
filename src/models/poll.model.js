@@ -7,8 +7,8 @@ const OptionSchema = new Schema({
 });
 
 const PollSchema = new Schema({
-    title: { type: String, required: true, trim: true },
-    description: { type: String, trim: true },
+    title: { type: String, required: true},
+    description: { type: String },
     options: [OptionSchema],
     creator: { type: Types.ObjectId, ref: 'User', required: true },
     isLocked: { type: Boolean, default: false },

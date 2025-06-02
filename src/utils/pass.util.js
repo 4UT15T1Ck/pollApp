@@ -1,4 +1,3 @@
-// src/utils/pass.util.js
 import bcrypt from "bcryptjs";
 
 const passUtil = {

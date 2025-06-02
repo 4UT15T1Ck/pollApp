@@ -13,18 +13,17 @@ class PollService {
     async getAllPolls(page = 1, limit = 10, userId) {
         const skip = (page - 1) * limit;
         const polls = await PollModel.find()
-            .populate('creator', 'id username name') // username if available, else name
+            .populate('creator', 'id username name') 
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .lean(); // Use .lean() for faster queries, manually add votesCount
+            .lean(); 
 
         const total = await PollModel.countDocuments();
 
-        // Enhance polls with votesCount
         for (const poll of polls) {
             poll.votesCount = await VoteModel.countDocuments({ poll: poll._id });
-            poll.id = poll._id; // for consistency if _id is not directly used in frontend
+            poll.id = poll._id; 
              poll.options = poll.options.map(opt => ({ id: opt._id, text: opt.text }));
         }
         return { polls, total, page, limit };
@@ -33,7 +32,7 @@ class PollService {
     async getPollById(pollId, requestingUserId) {
         const poll = await PollModel.findById(pollId)
             .populate('creator', 'id username name')
-            .lean(); // Use lean for manipulation
+            .lean(); 
 
         if (!poll) throw new Error('Poll not found');
         
@@ -70,7 +69,7 @@ class PollService {
     async updatePoll(pollId, updateData, userId) {
         const poll = await PollModel.findById(pollId);
         if (!poll) throw new Error('Poll not found');
-        if (poll.creator.toString() !== userId.toString()) { // Ensure admin or creator logic if needed. For now, admin only
+        if (poll.creator.toString() !== userId.toString()) {
             throw new Error('Forbidden: Not authorized to update this poll');
         }
 
@@ -82,18 +81,14 @@ class PollService {
     async deletePoll(pollId, userId) {
         const poll = await PollModel.findById(pollId);
         if (!poll) throw new Error('Poll not found');
-        if (poll.creator.toString() !== userId.toString()) { // As per spec admin can manage, so this check is fine
-             // Or allow any admin to delete: if (req.user.role !== 'admin' && poll.creator.toString() !== userId.toString())
-            // For now, only creator or any admin (checked by route middleware)
-        }
         await PollModel.findByIdAndDelete(pollId);
-        await VoteModel.deleteMany({ poll: pollId }); // Cascade delete votes
+        await VoteModel.deleteMany({ poll: pollId }); 
         return { message: 'Poll deleted successfully' };
     }
 
     async lockPoll(pollId, userId) {
         const poll = await PollModel.findOneAndUpdate(
-            { _id: pollId /*, creator: userId */ }, // Creator check can be here or rely on route auth
+            { _id: pollId }, 
             { isLocked: true },
             { new: true }
         );
@@ -103,7 +98,7 @@ class PollService {
 
     async unlockPoll(pollId, userId) {
         const poll = await PollModel.findOneAndUpdate(
-            { _id: pollId /*, creator: userId */ },
+            { _id: pollId },
             { isLocked: false },
             { new: true }
         );
@@ -114,7 +109,6 @@ class PollService {
     async addOptionToPoll(pollId, optionData, userId) {
         const poll = await PollModel.findById(pollId);
         if (!poll) throw new Error('Poll not found');
-        // if (poll.creator.toString() !== userId.toString()) throw new Error('Forbidden');
         if (poll.isLocked) throw new Error('Poll is locked, cannot add options');
 
         const newOption = { _id: new mongoose.Types.ObjectId(), text: optionData.text };
@@ -126,14 +120,12 @@ class PollService {
     async removeOptionFromPoll(pollId, optionId, userId) {
         const poll = await PollModel.findById(pollId);
         if (!poll) throw new Error('Poll not found');
-        // if (poll.creator.toString() !== userId.toString()) throw new Error('Forbidden');
         if (poll.isLocked) throw new Error('Poll is locked, cannot remove options');
 
         const optionIndex = poll.options.findIndex(opt => opt._id.toString() === optionId);
         if (optionIndex === -1) throw new Error('Option not found in poll');
 
         poll.options.splice(optionIndex, 1);
-        // Also remove votes for this option
         await VoteModel.deleteMany({ poll: pollId, optionId: optionId });
         await poll.save();
         return poll;
@@ -150,10 +142,6 @@ class PollService {
 
         const existingVote = await VoteModel.findOne({ user: userId, poll: pollId });
         if (existingVote) {
-             // If allowing vote change:
-             // existingVote.optionId = optionId;
-             // await existingVote.save();
-             // return { message: 'Vote changed successfully', vote: existingVote };
             throw new Error('You have already voted on this poll');
         }
 
