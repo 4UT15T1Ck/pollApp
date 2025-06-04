@@ -17,7 +17,6 @@ class PollService {
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .lean(); 
 
         const total = await PollModel.countDocuments();
 
@@ -32,7 +31,6 @@ class PollService {
     async getPollById(pollId, requestingUserId) {
         const poll = await PollModel.findById(pollId)
             .populate('creator', 'id username name')
-            .lean(); 
 
         if (!poll) throw new Error('Poll not found');
         
